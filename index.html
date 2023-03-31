@@ -194,101 +194,6 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/66afd8af.html">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/post/66afd8af.html" class="post-title-link" itemprop="url">openWrt的物理安装方法</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2023-03-23 15:27:59" itemprop="dateCreated datePublished" datetime="2023-03-23T15:27:59+08:00">2023-03-23</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2023-03-31 21:09:53" itemprop="dateModified" datetime="2023-03-31T21:09:53+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <ol>
-<li>下载固件（如<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1uRXg_krKHPrQneI3F2GNcSVRoCgkqESr">eSir的</a>），如果是压缩格式如tar，解压出img文件</li>
-<li>用Ventoy+U盘+WinPE做一个PE U盘 <br>a. 下载 <a target="_blank" rel="noopener" href="https://www.ventoy.net/cn/download.html">Ventoy</a>，并安装到U盘<br>b. 下载 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/download.html">WePE64 ISO</a><br>c. 下载 physdiskwrite.exe ，将WePE64的ISO以及physdiskwrite.exe都放到U盘根目录</li>
-<li>软路由断电，插入U盘，插入键盘，软路由接显示器</li>
-<li>启动软路由，键盘按F10&#x2F;F12&#x2F;F11&#x2F;Delete 键，进入启动选择，选WinPE启动</li>
-<li>进入WinPE系统后打开CMD，定位到U盘根目录，使用以下命令刷写镜像<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">physdiskwrite.exe -u xxx.img</span><br></pre></td></tr></table></figure>
-根据命令行提示，输入数字选择刷写目标</li>
-<li>刷写完成后重启软路由</li>
-<li>重启后记得在进系统前拔掉U盘，启动成功后电脑网线连eth0口，192.168.5.1进入WebUI</li>
-<li>重设密码以后，一定记得修改网口物理设置，然后HDCP，上网账号等等等……</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/ca157723.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -748,6 +653,101 @@
 <p>others</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /tmp; wget --no-check-certificate http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh; sh ./install_ddnsto.sh</span><br></pre></td></tr></table></figure>
 <p>在OpenWrt TTYD终端中输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/fhQrU4evJ6HCPko.png"><br><img src="https://s2.loli.net/2023/03/23/aoYJEZePR6SIn7h.png"><br>或者putty、MobaXterm等软件登陆SSH，输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/4knjo5PEf9IAgTt.png"><br><img src="https://s2.loli.net/2023/03/23/KqkTmlw2B79ezxb.png"><br><img src="https://s2.loli.net/2023/03/23/8RHaOkpYI4GD3bl.png"><br>然后找到DDNS.to内网穿透，启用并设置token。<br><img src="https://s2.loli.net/2023/03/23/QSo1q2VihPpeYrI.png"></p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/66afd8af.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
+      <meta itemprop="name" content="Wesley Chen">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wesley's Blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Wesley's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/post/66afd8af.html" class="post-title-link" itemprop="url">openWrt的物理安装方法</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-11-23 02:27:59" itemprop="dateCreated datePublished" datetime="2022-11-23T02:27:59+08:00">2022-11-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:13:53" itemprop="dateModified" datetime="2023-03-31T21:13:53+08:00">2023-03-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <ol>
+<li>下载固件（如<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1uRXg_krKHPrQneI3F2GNcSVRoCgkqESr">eSir的</a>），如果是压缩格式如tar，解压出img文件</li>
+<li>用Ventoy+U盘+WinPE做一个PE U盘 <br>a. 下载 <a target="_blank" rel="noopener" href="https://www.ventoy.net/cn/download.html">Ventoy</a>，并安装到U盘<br>b. 下载 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/download.html">WePE64 ISO</a><br>c. 下载 physdiskwrite.exe ，将WePE64的ISO以及physdiskwrite.exe都放到U盘根目录</li>
+<li>软路由断电，插入U盘，插入键盘，软路由接显示器</li>
+<li>启动软路由，键盘按F10&#x2F;F12&#x2F;F11&#x2F;Delete 键，进入启动选择，选WinPE启动</li>
+<li>进入WinPE系统后打开CMD，定位到U盘根目录，使用以下命令刷写镜像<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">physdiskwrite.exe -u xxx.img</span><br></pre></td></tr></table></figure>
+根据命令行提示，输入数字选择刷写目标</li>
+<li>刷写完成后重启软路由</li>
+<li>重启后记得在进系统前拔掉U盘，启动成功后电脑网线连eth0口，192.168.5.1进入WebUI</li>
+<li>重设密码以后，一定记得修改网口物理设置，然后HDCP，上网账号等等等……</li>
+</ol>
 
       
     </div>
