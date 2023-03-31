@@ -194,7 +194,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/42e00536.html">
+    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/66afd8af.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
@@ -212,7 +212,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/post/42e00536.html" class="post-title-link" itemprop="url">FFMPEG 缓冲设置</a>
+          <a href="/post/66afd8af.html" class="post-title-link" itemprop="url">openWrt的物理安装方法</a>
         </h2>
 
         <div class="post-meta-container">
@@ -222,9 +222,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2023-03-31 16:15:49 / 修改时间：20:23:10" itemprop="dateCreated datePublished" datetime="2023-03-31T16:15:49+08:00">2023-03-31</time>
+      <time title="创建时间：2023-03-23 15:27:59" itemprop="dateCreated datePublished" datetime="2023-03-23T15:27:59+08:00">2023-03-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:09:53" itemprop="dateModified" datetime="2023-03-31T21:09:53+08:00">2023-03-31</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -232,7 +238,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
         </span>
     </span>
 
@@ -246,39 +252,17 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a><strong>问题描述</strong></h2><p>GE11的视频说明书开发过程中遇到一个问题，网络带宽远低于视频码率时使用IjkPlayer播放会频繁缓冲再播放，影响使用体验。</p>
-<h2 id="问题复现"><a href="#问题复现" class="headerlink" title="问题复现"></a><strong>问题复现</strong></h2><p>先是想办法复现问题，为了可以控制网络速度，使用了Throttly - Network Tools这个软件来通过本地VPN限速的方式来模拟低带宽环境。视频源可以直接使用ijkPlayer自带demo里的sample。</p>
-<p>实际试下来会发生缓冲-播放频繁切换的现象，较为影响使用体验。</p>
-<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a><strong>问题解决</strong></h2><p>视频码率和网络环境没有改善可能的情况下，只能从缓冲策略下手，来改善使用体验。<br>网上搜索了一下，其他的很多都是加快起播速度（所谓秒开）的设置方案，无帮助，最终在ijkPlayer的GitHub里找到了有人提出的类似问题，但最终没有答案。</p>
-<p>但题主提到的几个option还是给了很重要的线索，顺藤摸瓜找到了这篇日志，日志详细解释了ijkPlayer的缓冲策略和可以调整的几个option。大致摘抄如下：</p>
-<blockquote>
-<p>buffering机制描述<br>在read_thread的for(;;)循环中首帧未播放时每50ms&#x2F;首帧播放后每500ms进行检查是否可以恢复播放；<br>当检查到能满足播放时，就升级时间梯度，进行更严格的检查，让队列中缓存尽可能多的数据，以避免卡顿；同样，当触发卡顿时，也必须得等到满足时间梯度才能进入播放。<br>在解码前取包时，若发现取不到包了，则暂停播放，触发缓冲，并置is-&gt;paused为1；此时依然要等循环调用ffp_check_buffering_l，填满队列，满足播放条件后才能恢复播放状态；是以牺牲延迟来保障流畅。<br>满足播放条件：能播放时长已经足够播放hwm_in_ms了 或者 能播放的数据量已经大于256K了<br><em>（这里我看实际代码是不准确的，对应看下面代码块第60行，我在ijkPlayer的源码里没找到，估计后来改了？）</em><br>时间梯度默认初始值</p>
-</blockquote>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">high_water_mark_in_bytes = DEFAULT_HIGH_WATER_MARK_IN_BYTES; 256K，始终不变</span><br><span class="line">first_high_water_mark_in_ms = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS; <span class="number">100</span></span><br><span class="line">next_high_water_mark_in_ms = DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS; <span class="number">1000</span></span><br><span class="line">last_high_water_mark_in_ms = DEFAULT_LAST_HIGH_WATER_MARK_IN_MS; <span class="number">5000</span></span><br><span class="line">current_high_water_mark_in_ms = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS; <span class="number">100</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>buffer缓冲时长<br>100ms -&gt; 1s -&gt; 2s -&gt; 4s -&gt; 5s，最大递增到5s；但满足256K即可放行；<br>代码如下：</p>
-</blockquote>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">int</span> <span class="title function_">read_thread</span><span class="params">(<span class="keyword">void</span> *arg)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span>  (;;) &#123;</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 开启缓冲机制</span></span><br><span class="line"><span class="comment">         * 在for循环中，每读到一个包，都会检查是否进行缓冲</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">	    <span class="keyword">if</span> (ffp-&gt;packet_buffering) &#123;</span><br><span class="line">            io_tick_counter = SDL_GetTickHR();</span><br><span class="line"> </span><br><span class="line">            <span class="keyword">if</span> ((!ffp-&gt;first_video_frame_rendered &amp;&amp; is-&gt;video_st) ||</span><br><span class="line">                (!ffp-&gt;first_audio_frame_rendered &amp;&amp; is-&gt;audio_st)) &#123;</span><br><span class="line">                <span class="comment">// 首帧未显示前，50ms检测一次</span></span><br><span class="line">                <span class="keyword">if</span> (abs((<span class="type">int</span>) (io_tick_counter - prev_io_tick_counter)) &gt; FAST_BUFFERING_CHECK_PER_MILLISECONDS) &#123;</span><br><span class="line">                    prev_io_tick_counter = io_tick_counter;</span><br><span class="line">                    ffp-&gt;dcc.current_high_water_mark_in_ms = ffp-&gt;dcc.first_high_water_mark_in_ms;</span><br><span class="line">                    ffp_check_buffering_l(ffp);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (abs((<span class="type">int</span>) (io_tick_counter - prev_io_tick_counter)) &gt; BUFFERING_CHECK_PER_MILLISECONDS) &#123;</span><br><span class="line">                	<span class="comment">// 首帧显示后，500ms检测一次</span></span><br><span class="line">                    prev_io_tick_counter = io_tick_counter;</span><br><span class="line">                    ffp_check_buffering_l(ffp);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;      </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * 循环检查是否缓冲够了，够了就去播放吧，取消缓冲状态，取消暂停，恢复播放</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_check_buffering_l</span><span class="params">(FFPlayer *ffp)</span> &#123;</span><br><span class="line">    <span class="comment">// 阶梯递增，最大DEFAULT_LAST_HIGH_WATER_MARK_IN_MS，5s</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">hwm_in_ms</span> <span class="operator">=</span> ffp-&gt;dcc.current_high_water_mark_in_ms;</span><br><span class="line">    <span class="type">int</span> <span class="variable">hwm_in_bytes</span> <span class="operator">=</span> ffp-&gt;dcc.high_water_mark_in_bytes;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 队列里缓存的能播放的音视频播放时长</span></span><br><span class="line">    <span class="type">int64_t</span> <span class="variable">audio_cached_duration</span> <span class="operator">=</span> ffp-&gt;stat.audio_cache.duration;</span><br><span class="line">    <span class="type">int64_t</span> <span class="variable">video_cached_duration</span> <span class="operator">=</span> ffp-&gt;stat.video_cache.duration;</span><br><span class="line">    <span class="type">int</span> <span class="variable">cached_duration_in_ms</span> <span class="operator">=</span> min((video_cached_duration, audio_cached_duration);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">      *  计算当前能播放的时长超过了多少hwm_in_ms</span></span><br><span class="line"><span class="comment">      *  我理解这块是个四舍五入，然后放大一百倍，cached_duration_in_ms * 100.5 / hwm_in_ms</span></span><br><span class="line"><span class="comment">      *  后面的算法，实际上表示cached_duration_in_ms&gt;hwm_in_ms即可进行播放了</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">    <span class="type">int</span>  <span class="variable">buf_time_percent</span> <span class="operator">=</span> (<span class="type">int</span>) av_rescale(cached_duration_in_ms, <span class="number">1005</span>, hwm_in_ms * <span class="number">10</span>);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 队列里缓存的音视频总大小</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">cached_size</span> <span class="operator">=</span> is-&gt;audioq.size + is-&gt;videoq.size;</span><br><span class="line">    <span class="comment">// 计算缓存数据大小超过了多少hwm_in_bytes</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">buf_size_percent</span> <span class="operator">=</span> (<span class="type">int</span>) av_rescale(cached_size, <span class="number">1005</span>, hwm_in_bytes * <span class="number">10</span>);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">      *  能播放时长已经足够播放hwm_in_ms了  ||</span></span><br><span class="line"><span class="comment">      *  能播放的数据量已经足够播放hwm_in_bytes了，</span></span><br><span class="line"><span class="comment">      *  就解除缓冲状态/暂停状态，设置为播放状态</span></span><br><span class="line"><span class="comment">      */</span> </span><br><span class="line">    <span class="type">int</span> <span class="variable">need_start_buffering</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>  (buf_time_percent &gt;= <span class="number">100</span> || buf_size_percent &gt;= <span class="number">100</span>) &#123;</span><br><span class="line">        need_start_buffering = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (need_start_buffering) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hwm_in_ms &lt; ffp-&gt;dcc.next_high_water_mark_in_ms) &#123;</span><br><span class="line">            hwm_in_ms = ffp-&gt;dcc.next_high_water_mark_in_ms;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            hwm_in_ms *= <span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (hwm_in_ms &gt; ffp-&gt;dcc.last_high_water_mark_in_ms)</span><br><span class="line">            hwm_in_ms = ffp-&gt;dcc.last_high_water_mark_in_ms;</span><br><span class="line"> </span><br><span class="line">        ffp-&gt;dcc.current_high_water_mark_in_ms = hwm_in_ms;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (is-&gt;buffer_indicator_queue &amp;&amp; is-&gt;buffer_indicator_queue-&gt;nb_packets &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((is-&gt;audioq.nb_packets &gt;= MIN_MIN_FRAMES || is-&gt;audio_stream &lt; <span class="number">0</span> || is-&gt;audioq.abort_request)</span><br><span class="line">                &amp;&amp; (is-&gt;videoq.nb_packets &gt;= MIN_MIN_FRAMES || is-&gt;video_stream &lt; <span class="number">0</span> || is-&gt;videoq.abort_request)) &#123;</span><br><span class="line">                <span class="comment">// 音视频队列的缓冲区差不多了，&gt; MIN_MIN，则去除暂停状态，</span></span><br><span class="line">                ffp_toggle_buffering(ffp, <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_toggle_buffering</span><span class="params">(FFPlayer *ffp, <span class="type">int</span> start_buffering)</span> &#123;</span><br><span class="line">    SDL_LockMutex(ffp-&gt;is-&gt;play_mutex);</span><br><span class="line">    ffp_toggle_buffering_l(ffp, start_buffering);</span><br><span class="line">    SDL_UnlockMutex(ffp-&gt;is-&gt;play_mutex);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_toggle_buffering_l</span><span class="params">(FFPlayer *ffp, <span class="type">int</span> buffering_on)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!ffp-&gt;packet_buffering) &#123;</span><br><span class="line">        <span class="comment">// 缓存机制是否开启</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    VideoState *is = ffp-&gt;is;</span><br><span class="line">    <span class="keyword">if</span> (buffering_on &amp;&amp; !is-&gt;buffering_on) &#123;</span><br><span class="line">        <span class="comment">// 当前没buffering, 要去buffering，FFP_MSG_BUFFERING_START</span></span><br><span class="line">        is-&gt;buffering_on = <span class="number">1</span>;</span><br><span class="line">        stream_update_pause_l(ffp); <span class="comment">// 暂停</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!buffering_on &amp;&amp; is-&gt;buffering_on) &#123;</span><br><span class="line">        <span class="comment">// 当前buffering，取消buffering，FFP_MSG_BUFFERING_END</span></span><br><span class="line">        is-&gt;buffering_on = <span class="number">0</span>;</span><br><span class="line">        stream_update_pause_l(ffp); <span class="comment">// 取消暂停</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * 软件音频、软硬解视频时，阻塞等待直到退出或者有AVPacket数据</span></span><br><span class="line"><span class="comment">  * 在开启缓冲机制的情况下，会暂停进行缓冲，等待check buffering修复到播放状态</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">static</span> <span class="type">int</span> <span class="title function_">packet_queue_get_or_buffering</span><span class="params">(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, <span class="type">int</span> *serial,</span></span><br><span class="line"><span class="params">                                         <span class="type">int</span> *finished)</span> &#123;</span><br><span class="line">    <span class="keyword">assert</span>(finished);</span><br><span class="line">    <span class="keyword">if</span> (!ffp-&gt;packet_buffering)&#123;</span><br><span class="line">        <span class="comment">// 未开启缓冲机制</span></span><br><span class="line">        <span class="keyword">return</span> packet_queue_get(q, pkt, <span class="number">1</span>, serial); <span class="comment">// queue为空时会阻塞等待</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">new_packet</span> <span class="operator">=</span> packet_queue_get(q, pkt, <span class="number">0</span>, serial);</span><br><span class="line">        <span class="keyword">if</span> (new_packet &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (new_packet == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (q-&gt;is_buffer_indicator &amp;&amp; !*finished) &#123;</span><br><span class="line">                ffp_toggle_buffering(ffp, <span class="number">1</span>);   <span class="comment">// 暂停当前，去缓冲，设置为1</span></span><br><span class="line">            &#125;</span><br><span class="line">            new_packet = packet_queue_get(q, pkt, <span class="number">1</span>, serial); <span class="comment">// 缓冲了，再拿一次</span></span><br><span class="line">            <span class="keyword">if</span> (new_packet &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (*finished == *serial) &#123;</span><br><span class="line">            av_packet_unref(pkt);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际我在ijkPlayer的代码里看到对于缓冲时长和缓冲数据量的处理是这样的，如果缓冲时长设置有效，缓冲时长的percent优先，否则以数据量缓冲进度为准：<br><img src="https://s2.loli.net/2023/03/23/M5ub6cgqF8wElLj.png"><br>于是我在demo里添加了如下的修改</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, <span class="string">&quot;next-high-water-mark-ms&quot;</span>, <span class="number">10</span> * <span class="number">1000L</span>);</span><br></pre></td></tr></table></figure>
-<p>但无效，并且log显示设置option失败</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error setting option next-high-water-mark-ms to value 10000.</span><br></pre></td></tr></table></figure>
-<p>又进行了一番<a target="_blank" rel="noopener" href="https://blog.csdn.net/silently_frog/article/details/108617063">搜索</a>之后，看到这么一篇博客，解释了ijkPlayer设置option时一些限制：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="string">&quot;max-buffer-size&quot;</span>,                    <span class="string">&quot;max buffer size should be pre-read&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.max_buffer_size), OPTION_INT(MAX_QUEUE_SIZE, <span class="number">0</span>, MAX_QUEUE_SIZE) &#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>配置一个选项需要填写4个信息：<br>max-buffer-size：选项的名称；<br>max buffer size should be pre-read：选项的描述；<br>OPTION_OFFSET(dcc.max_buffer_size)：选项对应的系统变量；<br>OPTION_INT(MAX_QUEUE_SIZE, 0, MAX_QUEUE_SIZE)：选项的取值范围；<br>下面解释OPTION_OFFSET、OPTION_INT函数：<br>OPTION_OFFSET：</p>
-</blockquote>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="title function_">OPTION_OFFSET</span><span class="params">(x)</span> offsetof(FFPlayer, x)</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>系统最终回调用offsetof函数，这个是gcc中的函数，网上搜了下，其作用为：访问返回结构体FFPlayer中成员变量x相对于结构体首地址的偏移量，转换为Java的思维就是返回FFPlayer类中成员变量x.<br>OPTION_INT:</p>
-</blockquote>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> OPTION_INT(default__, min__, max__) \</span></span><br><span class="line"><span class="meta">    .type = AV_OPT_TYPE_INT, \</span></span><br><span class="line"><span class="meta">    &#123; .i64 = default__ &#125;, \</span></span><br><span class="line"><span class="meta">    .min = min__, \</span></span><br><span class="line"><span class="meta">    .max = max__, \</span></span><br><span class="line"><span class="meta">    .flags = AV_OPT_FLAG_DECODING_PARAM</span></span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>其第一个参数为选项的默认值，第二个参数为选项的最小值，第三个参数为选项的最大值</p>
-</blockquote>
-<p><strong>再看我们设置的option相关代码，发现它的最大最小值是写死的 DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS 到 DEFAULT_LAST_HIGH_WATER_MARK_IN_MS之间</strong></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="string">&quot;first-high-water-mark-ms&quot;</span>,           <span class="string">&quot;first chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.first_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;next-high-water-mark-ms&quot;</span>,            <span class="string">&quot;second chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.next_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;last-high-water-mark-ms&quot;</span>,            <span class="string">&quot;last chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.last_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_LAST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br></pre></td></tr></table></figure>
-<p>DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS &#x3D; 100ms<br>DEFAULT_LAST_HIGH_WATER_MARK_IN_MS &#x3D; 5000ms<br>我设置的是10000ms自然会报错，改为5000ms后不再报错且生效。<br>为什么会有上述限制还要进一步的寻找答案，目前猜和代码的逻辑有关系。</p>
+          <ol>
+<li>下载固件（如<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1uRXg_krKHPrQneI3F2GNcSVRoCgkqESr">eSir的</a>），如果是压缩格式如tar，解压出img文件</li>
+<li>用Ventoy+U盘+WinPE做一个PE U盘 <br>a. 下载 <a target="_blank" rel="noopener" href="https://www.ventoy.net/cn/download.html">Ventoy</a>，并安装到U盘<br>b. 下载 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/download.html">WePE64 ISO</a><br>c. 下载 physdiskwrite.exe ，将WePE64的ISO以及physdiskwrite.exe都放到U盘根目录</li>
+<li>软路由断电，插入U盘，插入键盘，软路由接显示器</li>
+<li>启动软路由，键盘按F10&#x2F;F12&#x2F;F11&#x2F;Delete 键，进入启动选择，选WinPE启动</li>
+<li>进入WinPE系统后打开CMD，定位到U盘根目录，使用以下命令刷写镜像<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">physdiskwrite.exe -u xxx.img</span><br></pre></td></tr></table></figure>
+根据命令行提示，输入数字选择刷写目标</li>
+<li>刷写完成后重启软路由</li>
+<li>重启后记得在进系统前拔掉U盘，启动成功后电脑网线连eth0口，192.168.5.1进入WebUI</li>
+<li>重设密码以后，一定记得修改网口物理设置，然后HDCP，上网账号等等等……</li>
+</ol>
 
       
     </div>
@@ -333,9 +317,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2023-03-31 15:42:10 / 修改时间：20:22:43" itemprop="dateCreated datePublished" datetime="2023-03-31T15:42:10+08:00">2023-03-31</time>
+      <time title="创建时间：2023-03-20 16:42:10" itemprop="dateCreated datePublished" datetime="2023-03-20T16:42:10+08:00">2023-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:10:44" itemprop="dateModified" datetime="2023-03-31T21:10:44+08:00">2023-03-31</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -426,9 +416,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2023-03-31 15:38:55 / 修改时间：20:31:52" itemprop="dateCreated datePublished" datetime="2023-03-31T15:38:55+08:00">2023-03-31</time>
+      <time title="创建时间：2023-02-15 23:38:55" itemprop="dateCreated datePublished" datetime="2023-02-15T23:38:55+08:00">2023-02-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:10:28" itemprop="dateModified" datetime="2023-03-31T21:10:28+08:00">2023-03-31</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -485,7 +481,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/66afd8af.html">
+    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/42e00536.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
@@ -503,7 +499,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/post/66afd8af.html" class="post-title-link" itemprop="url">openWrt的物理安装方法</a>
+          <a href="/post/42e00536.html" class="post-title-link" itemprop="url">FFMPEG 缓冲设置</a>
         </h2>
 
         <div class="post-meta-container">
@@ -513,9 +509,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2023-03-31 15:37:59 / 修改时间：20:29:50" itemprop="dateCreated datePublished" datetime="2023-03-31T15:37:59+08:00">2023-03-31</time>
+      <time title="创建时间：2023-02-10 16:15:49" itemprop="dateCreated datePublished" datetime="2023-02-10T16:15:49+08:00">2023-02-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:11:00" itemprop="dateModified" datetime="2023-03-31T21:11:00+08:00">2023-03-31</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -523,7 +525,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
+          <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
         </span>
     </span>
 
@@ -537,102 +539,39 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <ol>
-<li>下载固件（如<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1uRXg_krKHPrQneI3F2GNcSVRoCgkqESr">eSir的</a>），如果是压缩格式如tar，解压出img文件</li>
-<li>用Ventoy+U盘+WinPE做一个PE U盘 <br>a. 下载 <a target="_blank" rel="noopener" href="https://www.ventoy.net/cn/download.html">Ventoy</a>，并安装到U盘<br>b. 下载 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/download.html">WePE64 ISO</a><br>c. 下载 physdiskwrite.exe ，将WePE64的ISO以及physdiskwrite.exe都放到U盘根目录</li>
-<li>软路由断电，插入U盘，插入键盘，软路由接显示器</li>
-<li>启动软路由，键盘按F10&#x2F;F12&#x2F;F11&#x2F;Delete 键，进入启动选择，选WinPE启动</li>
-<li>进入WinPE系统后打开CMD，定位到U盘根目录，使用以下命令刷写镜像<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">physdiskwrite.exe -u xxx.img</span><br></pre></td></tr></table></figure>
-根据命令行提示，输入数字选择刷写目标</li>
-<li>刷写完成后重启软路由</li>
-<li>重启后记得在进系统前拔掉U盘，启动成功后电脑网线连eth0口，192.168.5.1进入WebUI</li>
-<li>重设密码以后，一定记得修改网口物理设置，然后HDCP，上网账号等等等……</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/b1e7b70f.html">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/post/b1e7b70f.html" class="post-title-link" itemprop="url">DDNSTO openWrt 插件安装方法</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:36:48 / 修改时间：20:25:31" itemprop="dateCreated datePublished" datetime="2023-03-31T15:36:48+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>OpenWrt固件开发者众多，部分固件不自带ddnsto，可通过以下任一脚本轻松安装：<br>via curl</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(curl -sSL http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
-<p>via wget</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(wget --no-check-certificate -qO- http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
-<p>others</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /tmp; wget --no-check-certificate http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh; sh ./install_ddnsto.sh</span><br></pre></td></tr></table></figure>
-<p>在OpenWrt TTYD终端中输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/fhQrU4evJ6HCPko.png"><br><img src="https://s2.loli.net/2023/03/23/aoYJEZePR6SIn7h.png"><br>或者putty、MobaXterm等软件登陆SSH，输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/4knjo5PEf9IAgTt.png"><br><img src="https://s2.loli.net/2023/03/23/KqkTmlw2B79ezxb.png"><br><img src="https://s2.loli.net/2023/03/23/8RHaOkpYI4GD3bl.png"><br>然后找到DDNS.to内网穿透，启用并设置token。<br><img src="https://s2.loli.net/2023/03/23/QSo1q2VihPpeYrI.png"></p>
+          <h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a><strong>问题描述</strong></h2><p>GE11的视频说明书开发过程中遇到一个问题，网络带宽远低于视频码率时使用IjkPlayer播放会频繁缓冲再播放，影响使用体验。</p>
+<h2 id="问题复现"><a href="#问题复现" class="headerlink" title="问题复现"></a><strong>问题复现</strong></h2><p>先是想办法复现问题，为了可以控制网络速度，使用了Throttly - Network Tools这个软件来通过本地VPN限速的方式来模拟低带宽环境。视频源可以直接使用ijkPlayer自带demo里的sample。</p>
+<p>实际试下来会发生缓冲-播放频繁切换的现象，较为影响使用体验。</p>
+<h2 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a><strong>问题解决</strong></h2><p>视频码率和网络环境没有改善可能的情况下，只能从缓冲策略下手，来改善使用体验。<br>网上搜索了一下，其他的很多都是加快起播速度（所谓秒开）的设置方案，无帮助，最终在ijkPlayer的GitHub里找到了有人提出的类似问题，但最终没有答案。</p>
+<p>但题主提到的几个option还是给了很重要的线索，顺藤摸瓜找到了这篇日志，日志详细解释了ijkPlayer的缓冲策略和可以调整的几个option。大致摘抄如下：</p>
+<blockquote>
+<p>buffering机制描述<br>在read_thread的for(;;)循环中首帧未播放时每50ms&#x2F;首帧播放后每500ms进行检查是否可以恢复播放；<br>当检查到能满足播放时，就升级时间梯度，进行更严格的检查，让队列中缓存尽可能多的数据，以避免卡顿；同样，当触发卡顿时，也必须得等到满足时间梯度才能进入播放。<br>在解码前取包时，若发现取不到包了，则暂停播放，触发缓冲，并置is-&gt;paused为1；此时依然要等循环调用ffp_check_buffering_l，填满队列，满足播放条件后才能恢复播放状态；是以牺牲延迟来保障流畅。<br>满足播放条件：能播放时长已经足够播放hwm_in_ms了 或者 能播放的数据量已经大于256K了<br><em>（这里我看实际代码是不准确的，对应看下面代码块第60行，我在ijkPlayer的源码里没找到，估计后来改了？）</em><br>时间梯度默认初始值</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">high_water_mark_in_bytes = DEFAULT_HIGH_WATER_MARK_IN_BYTES; 256K，始终不变</span><br><span class="line">first_high_water_mark_in_ms = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS; <span class="number">100</span></span><br><span class="line">next_high_water_mark_in_ms = DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS; <span class="number">1000</span></span><br><span class="line">last_high_water_mark_in_ms = DEFAULT_LAST_HIGH_WATER_MARK_IN_MS; <span class="number">5000</span></span><br><span class="line">current_high_water_mark_in_ms = DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS; <span class="number">100</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>buffer缓冲时长<br>100ms -&gt; 1s -&gt; 2s -&gt; 4s -&gt; 5s，最大递增到5s；但满足256K即可放行；<br>代码如下：</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">int</span> <span class="title function_">read_thread</span><span class="params">(<span class="keyword">void</span> *arg)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span>  (;;) &#123;</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 开启缓冲机制</span></span><br><span class="line"><span class="comment">         * 在for循环中，每读到一个包，都会检查是否进行缓冲</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">	    <span class="keyword">if</span> (ffp-&gt;packet_buffering) &#123;</span><br><span class="line">            io_tick_counter = SDL_GetTickHR();</span><br><span class="line"> </span><br><span class="line">            <span class="keyword">if</span> ((!ffp-&gt;first_video_frame_rendered &amp;&amp; is-&gt;video_st) ||</span><br><span class="line">                (!ffp-&gt;first_audio_frame_rendered &amp;&amp; is-&gt;audio_st)) &#123;</span><br><span class="line">                <span class="comment">// 首帧未显示前，50ms检测一次</span></span><br><span class="line">                <span class="keyword">if</span> (abs((<span class="type">int</span>) (io_tick_counter - prev_io_tick_counter)) &gt; FAST_BUFFERING_CHECK_PER_MILLISECONDS) &#123;</span><br><span class="line">                    prev_io_tick_counter = io_tick_counter;</span><br><span class="line">                    ffp-&gt;dcc.current_high_water_mark_in_ms = ffp-&gt;dcc.first_high_water_mark_in_ms;</span><br><span class="line">                    ffp_check_buffering_l(ffp);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (abs((<span class="type">int</span>) (io_tick_counter - prev_io_tick_counter)) &gt; BUFFERING_CHECK_PER_MILLISECONDS) &#123;</span><br><span class="line">                	<span class="comment">// 首帧显示后，500ms检测一次</span></span><br><span class="line">                    prev_io_tick_counter = io_tick_counter;</span><br><span class="line">                    ffp_check_buffering_l(ffp);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;      </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * 循环检查是否缓冲够了，够了就去播放吧，取消缓冲状态，取消暂停，恢复播放</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_check_buffering_l</span><span class="params">(FFPlayer *ffp)</span> &#123;</span><br><span class="line">    <span class="comment">// 阶梯递增，最大DEFAULT_LAST_HIGH_WATER_MARK_IN_MS，5s</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">hwm_in_ms</span> <span class="operator">=</span> ffp-&gt;dcc.current_high_water_mark_in_ms;</span><br><span class="line">    <span class="type">int</span> <span class="variable">hwm_in_bytes</span> <span class="operator">=</span> ffp-&gt;dcc.high_water_mark_in_bytes;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 队列里缓存的能播放的音视频播放时长</span></span><br><span class="line">    <span class="type">int64_t</span> <span class="variable">audio_cached_duration</span> <span class="operator">=</span> ffp-&gt;stat.audio_cache.duration;</span><br><span class="line">    <span class="type">int64_t</span> <span class="variable">video_cached_duration</span> <span class="operator">=</span> ffp-&gt;stat.video_cache.duration;</span><br><span class="line">    <span class="type">int</span> <span class="variable">cached_duration_in_ms</span> <span class="operator">=</span> min((video_cached_duration, audio_cached_duration);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">      *  计算当前能播放的时长超过了多少hwm_in_ms</span></span><br><span class="line"><span class="comment">      *  我理解这块是个四舍五入，然后放大一百倍，cached_duration_in_ms * 100.5 / hwm_in_ms</span></span><br><span class="line"><span class="comment">      *  后面的算法，实际上表示cached_duration_in_ms&gt;hwm_in_ms即可进行播放了</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">    <span class="type">int</span>  <span class="variable">buf_time_percent</span> <span class="operator">=</span> (<span class="type">int</span>) av_rescale(cached_duration_in_ms, <span class="number">1005</span>, hwm_in_ms * <span class="number">10</span>);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 队列里缓存的音视频总大小</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">cached_size</span> <span class="operator">=</span> is-&gt;audioq.size + is-&gt;videoq.size;</span><br><span class="line">    <span class="comment">// 计算缓存数据大小超过了多少hwm_in_bytes</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">buf_size_percent</span> <span class="operator">=</span> (<span class="type">int</span>) av_rescale(cached_size, <span class="number">1005</span>, hwm_in_bytes * <span class="number">10</span>);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">      *  能播放时长已经足够播放hwm_in_ms了  ||</span></span><br><span class="line"><span class="comment">      *  能播放的数据量已经足够播放hwm_in_bytes了，</span></span><br><span class="line"><span class="comment">      *  就解除缓冲状态/暂停状态，设置为播放状态</span></span><br><span class="line"><span class="comment">      */</span> </span><br><span class="line">    <span class="type">int</span> <span class="variable">need_start_buffering</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span>  (buf_time_percent &gt;= <span class="number">100</span> || buf_size_percent &gt;= <span class="number">100</span>) &#123;</span><br><span class="line">        need_start_buffering = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> (need_start_buffering) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hwm_in_ms &lt; ffp-&gt;dcc.next_high_water_mark_in_ms) &#123;</span><br><span class="line">            hwm_in_ms = ffp-&gt;dcc.next_high_water_mark_in_ms;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            hwm_in_ms *= <span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (hwm_in_ms &gt; ffp-&gt;dcc.last_high_water_mark_in_ms)</span><br><span class="line">            hwm_in_ms = ffp-&gt;dcc.last_high_water_mark_in_ms;</span><br><span class="line"> </span><br><span class="line">        ffp-&gt;dcc.current_high_water_mark_in_ms = hwm_in_ms;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (is-&gt;buffer_indicator_queue &amp;&amp; is-&gt;buffer_indicator_queue-&gt;nb_packets &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((is-&gt;audioq.nb_packets &gt;= MIN_MIN_FRAMES || is-&gt;audio_stream &lt; <span class="number">0</span> || is-&gt;audioq.abort_request)</span><br><span class="line">                &amp;&amp; (is-&gt;videoq.nb_packets &gt;= MIN_MIN_FRAMES || is-&gt;video_stream &lt; <span class="number">0</span> || is-&gt;videoq.abort_request)) &#123;</span><br><span class="line">                <span class="comment">// 音视频队列的缓冲区差不多了，&gt; MIN_MIN，则去除暂停状态，</span></span><br><span class="line">                ffp_toggle_buffering(ffp, <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_toggle_buffering</span><span class="params">(FFPlayer *ffp, <span class="type">int</span> start_buffering)</span> &#123;</span><br><span class="line">    SDL_LockMutex(ffp-&gt;is-&gt;play_mutex);</span><br><span class="line">    ffp_toggle_buffering_l(ffp, start_buffering);</span><br><span class="line">    SDL_UnlockMutex(ffp-&gt;is-&gt;play_mutex);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">ffp_toggle_buffering_l</span><span class="params">(FFPlayer *ffp, <span class="type">int</span> buffering_on)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!ffp-&gt;packet_buffering) &#123;</span><br><span class="line">        <span class="comment">// 缓存机制是否开启</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    VideoState *is = ffp-&gt;is;</span><br><span class="line">    <span class="keyword">if</span> (buffering_on &amp;&amp; !is-&gt;buffering_on) &#123;</span><br><span class="line">        <span class="comment">// 当前没buffering, 要去buffering，FFP_MSG_BUFFERING_START</span></span><br><span class="line">        is-&gt;buffering_on = <span class="number">1</span>;</span><br><span class="line">        stream_update_pause_l(ffp); <span class="comment">// 暂停</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!buffering_on &amp;&amp; is-&gt;buffering_on) &#123;</span><br><span class="line">        <span class="comment">// 当前buffering，取消buffering，FFP_MSG_BUFFERING_END</span></span><br><span class="line">        is-&gt;buffering_on = <span class="number">0</span>;</span><br><span class="line">        stream_update_pause_l(ffp); <span class="comment">// 取消暂停</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * 软件音频、软硬解视频时，阻塞等待直到退出或者有AVPacket数据</span></span><br><span class="line"><span class="comment">  * 在开启缓冲机制的情况下，会暂停进行缓冲，等待check buffering修复到播放状态</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">static</span> <span class="type">int</span> <span class="title function_">packet_queue_get_or_buffering</span><span class="params">(FFPlayer *ffp, PacketQueue *q, AVPacket *pkt, <span class="type">int</span> *serial,</span></span><br><span class="line"><span class="params">                                         <span class="type">int</span> *finished)</span> &#123;</span><br><span class="line">    <span class="keyword">assert</span>(finished);</span><br><span class="line">    <span class="keyword">if</span> (!ffp-&gt;packet_buffering)&#123;</span><br><span class="line">        <span class="comment">// 未开启缓冲机制</span></span><br><span class="line">        <span class="keyword">return</span> packet_queue_get(q, pkt, <span class="number">1</span>, serial); <span class="comment">// queue为空时会阻塞等待</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">new_packet</span> <span class="operator">=</span> packet_queue_get(q, pkt, <span class="number">0</span>, serial);</span><br><span class="line">        <span class="keyword">if</span> (new_packet &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (new_packet == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (q-&gt;is_buffer_indicator &amp;&amp; !*finished) &#123;</span><br><span class="line">                ffp_toggle_buffering(ffp, <span class="number">1</span>);   <span class="comment">// 暂停当前，去缓冲，设置为1</span></span><br><span class="line">            &#125;</span><br><span class="line">            new_packet = packet_queue_get(q, pkt, <span class="number">1</span>, serial); <span class="comment">// 缓冲了，再拿一次</span></span><br><span class="line">            <span class="keyword">if</span> (new_packet &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">        <span class="keyword">if</span> (*finished == *serial) &#123;</span><br><span class="line">            av_packet_unref(pkt);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际我在ijkPlayer的代码里看到对于缓冲时长和缓冲数据量的处理是这样的，如果缓冲时长设置有效，缓冲时长的percent优先，否则以数据量缓冲进度为准：<br><img src="https://s2.loli.net/2023/03/23/M5ub6cgqF8wElLj.png"><br>于是我在demo里添加了如下的修改</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, <span class="string">&quot;next-high-water-mark-ms&quot;</span>, <span class="number">10</span> * <span class="number">1000L</span>);</span><br></pre></td></tr></table></figure>
+<p>但无效，并且log显示设置option失败</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error setting option next-high-water-mark-ms to value 10000.</span><br></pre></td></tr></table></figure>
+<p>又进行了一番<a target="_blank" rel="noopener" href="https://blog.csdn.net/silently_frog/article/details/108617063">搜索</a>之后，看到这么一篇博客，解释了ijkPlayer设置option时一些限制：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="string">&quot;max-buffer-size&quot;</span>,                    <span class="string">&quot;max buffer size should be pre-read&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.max_buffer_size), OPTION_INT(MAX_QUEUE_SIZE, <span class="number">0</span>, MAX_QUEUE_SIZE) &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>配置一个选项需要填写4个信息：<br>max-buffer-size：选项的名称；<br>max buffer size should be pre-read：选项的描述；<br>OPTION_OFFSET(dcc.max_buffer_size)：选项对应的系统变量；<br>OPTION_INT(MAX_QUEUE_SIZE, 0, MAX_QUEUE_SIZE)：选项的取值范围；<br>下面解释OPTION_OFFSET、OPTION_INT函数：<br>OPTION_OFFSET：</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#define <span class="title function_">OPTION_OFFSET</span><span class="params">(x)</span> offsetof(FFPlayer, x)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>系统最终回调用offsetof函数，这个是gcc中的函数，网上搜了下，其作用为：访问返回结构体FFPlayer中成员变量x相对于结构体首地址的偏移量，转换为Java的思维就是返回FFPlayer类中成员变量x.<br>OPTION_INT:</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> OPTION_INT(default__, min__, max__) \</span></span><br><span class="line"><span class="meta">    .type = AV_OPT_TYPE_INT, \</span></span><br><span class="line"><span class="meta">    &#123; .i64 = default__ &#125;, \</span></span><br><span class="line"><span class="meta">    .min = min__, \</span></span><br><span class="line"><span class="meta">    .max = max__, \</span></span><br><span class="line"><span class="meta">    .flags = AV_OPT_FLAG_DECODING_PARAM</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>其第一个参数为选项的默认值，第二个参数为选项的最小值，第三个参数为选项的最大值</p>
+</blockquote>
+<p><strong>再看我们设置的option相关代码，发现它的最大最小值是写死的 DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS 到 DEFAULT_LAST_HIGH_WATER_MARK_IN_MS之间</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="string">&quot;first-high-water-mark-ms&quot;</span>,           <span class="string">&quot;first chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.first_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;next-high-water-mark-ms&quot;</span>,            <span class="string">&quot;second chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.next_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;last-high-water-mark-ms&quot;</span>,            <span class="string">&quot;last chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.last_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_LAST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br></pre></td></tr></table></figure>
+<p>DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS &#x3D; 100ms<br>DEFAULT_LAST_HIGH_WATER_MARK_IN_MS &#x3D; 5000ms<br>我设置的是10000ms自然会报错，改为5000ms后不再报错且生效。<br>为什么会有上述限制还要进一步的寻找答案，目前猜和代码的逻辑有关系。</p>
 
       
     </div>
@@ -687,9 +626,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2023-03-31 15:34:29 / 修改时间：20:25:33" itemprop="dateCreated datePublished" datetime="2023-03-31T15:34:29+08:00">2023-03-31</time>
+      <time title="创建时间：2023-01-05 02:34:29" itemprop="dateCreated datePublished" datetime="2023-01-05T02:34:29+08:00">2023-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:11:20" itemprop="dateModified" datetime="2023-03-31T21:11:20+08:00">2023-03-31</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -712,6 +657,97 @@
     
     <div class="post-body" itemprop="articleBody">
           <p>今天在自家的Nas上部署了docker版为知笔记，浏览器无法正常上传图片，Mac和Linux上的WizNoteX客户端无法正常同步笔记和新建笔记，iOS版的却是正常的。<br>后来研究了一下，发现是因为新版的WizNoteX不兼容，重新下载安装旧版的为知笔记后Mac和Linux端app又遇到了登陆失败的问题，后来研究发现是需要填入Http地址，切换到DDNSTO提供的http端口后终于登陆成功。<br>Linux端登陆成功后又发现无法切换输入法，也就是说无法输入中文，google之后发现是因为不支持fcitx，需要自行编译十分麻烦。<br>然后换了非官方的<a target="_blank" rel="noopener" href="https://github.com/altairwei/WizNotePlus">WiznotePlus</a>后解决了问题。正在犹豫要不要Mac上也改用这个。<br><img src="https://s2.loli.net/2023/03/23/rS7o3PygAUEOaFN.png" alt="Linux上的WizNotePlus"><br>Update：Mac版的WizNotePlus无法打开，提示无法验证开发者。换回了原版。</p>
+
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/post/b1e7b70f.html">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s2.loli.net/2023/03/31/anY9NMl8qfRzHPI.gif">
+      <meta itemprop="name" content="Wesley Chen">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Wesley's Blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="undefined | Wesley's Blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/post/b1e7b70f.html" class="post-title-link" itemprop="url">DDNSTO openWrt 插件安装方法</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-12-05 15:36:48" itemprop="dateCreated datePublished" datetime="2022-12-05T15:36:48+08:00">2022-12-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2023-03-31 21:11:43" itemprop="dateModified" datetime="2023-03-31T21:11:43+08:00">2023-03-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>OpenWrt固件开发者众多，部分固件不自带ddnsto，可通过以下任一脚本轻松安装：<br>via curl</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(curl -sSL http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<p>via wget</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(wget --no-check-certificate -qO- http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
+<p>others</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /tmp; wget --no-check-certificate http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh; sh ./install_ddnsto.sh</span><br></pre></td></tr></table></figure>
+<p>在OpenWrt TTYD终端中输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/fhQrU4evJ6HCPko.png"><br><img src="https://s2.loli.net/2023/03/23/aoYJEZePR6SIn7h.png"><br>或者putty、MobaXterm等软件登陆SSH，输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/4knjo5PEf9IAgTt.png"><br><img src="https://s2.loli.net/2023/03/23/KqkTmlw2B79ezxb.png"><br><img src="https://s2.loli.net/2023/03/23/8RHaOkpYI4GD3bl.png"><br>然后找到DDNS.to内网穿透，启用并设置token。<br><img src="https://s2.loli.net/2023/03/23/QSo1q2VihPpeYrI.png"></p>
 
       
     </div>
