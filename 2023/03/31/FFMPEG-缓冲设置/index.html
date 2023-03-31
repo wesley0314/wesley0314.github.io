@@ -19,23 +19,30 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"wesley0314.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.15.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
 
-    <meta property="og:type" content="website">
-<meta property="og:title" content="Wesley&#39;s Blog">
-<meta property="og:url" content="https://wesley0314.github.io/index.html">
+    <meta name="description" content="问题描述GE11的视频说明书开发过程中遇到一个问题，网络带宽远低于视频码率时使用IjkPlayer播放会频繁缓冲再播放，影响使用体验。 问题复现先是想办法复现问题，为了可以控制网络速度，使用了Throttly - Network Tools这个软件来通过本地VPN限速的方式来模拟低带宽环境。视频源可以直接使用ijkPlayer自带demo里的sample。 实际试下来会发生缓冲-播放频繁切换的现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FFMPEG 缓冲设置">
+<meta property="og:url" content="https://wesley0314.github.io/2023/03/31/FFMPEG-%E7%BC%93%E5%86%B2%E8%AE%BE%E7%BD%AE/index.html">
 <meta property="og:site_name" content="Wesley&#39;s Blog">
+<meta property="og:description" content="问题描述GE11的视频说明书开发过程中遇到一个问题，网络带宽远低于视频码率时使用IjkPlayer播放会频繁缓冲再播放，影响使用体验。 问题复现先是想办法复现问题，为了可以控制网络速度，使用了Throttly - Network Tools这个软件来通过本地VPN限速的方式来模拟低带宽环境。视频源可以直接使用ijkPlayer自带demo里的sample。 实际试下来会发生缓冲-播放频繁切换的现">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://s2.loli.net/2023/03/23/M5ub6cgqF8wElLj.png">
+<meta property="article:published_time" content="2023-03-31T08:15:49.000Z">
+<meta property="article:modified_time" content="2023-03-31T08:17:06.063Z">
 <meta property="article:author" content="Wesley Chen">
+<meta property="article:tag" content="Android">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://s2.loli.net/2023/03/23/M5ub6cgqF8wElLj.png">
 
 
-<link rel="canonical" href="https://wesley0314.github.io/">
+<link rel="canonical" href="https://wesley0314.github.io/2023/03/31/FFMPEG-%E7%BC%93%E5%86%B2%E8%AE%BE%E7%BD%AE/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":true,"isPost":false,"lang":"zh-CN","comments":"","permalink":"","path":"index.html","title":""}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://wesley0314.github.io/2023/03/31/FFMPEG-%E7%BC%93%E5%86%B2%E8%AE%BE%E7%BD%AE/","path":"2023/03/31/FFMPEG-缓冲设置/","title":"FFMPEG 缓冲设置"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Wesley's Blog</title>
+<title>FFMPEG 缓冲设置 | Wesley's Blog</title>
   
 
 
@@ -65,7 +72,7 @@
 
     <a href="/" class="brand" rel="start">
       <i class="logo-line"></i>
-      <h1 class="site-title">Wesley's Blog</h1>
+      <p class="site-title">Wesley's Blog</p>
       <i class="logo-line"></i>
     </a>
   </div>
@@ -87,7 +94,7 @@
   
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -100,6 +107,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">1.</span> <span class="nav-text">问题描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">2.</span> <span class="nav-text">问题复现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text">问题解决</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -138,16 +146,17 @@
 
     </div>
 
-    <div class="main-inner index posts-expand">
+    <div class="main-inner post posts-expand">
 
-    
+
+  
 
 
 <div class="post-block">
   
   
 
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/FFMPEG-%E7%BC%93%E5%86%B2%E8%AE%BE%E7%BD%AE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -161,13 +170,13 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
+      <meta itemprop="name" content="FFMPEG 缓冲设置 | Wesley's Blog">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/FFMPEG-%E7%BC%93%E5%86%B2%E8%AE%BE%E7%BD%AE/" class="post-title-link" itemprop="url">FFMPEG 缓冲设置</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          FFMPEG 缓冲设置
+        </h1>
 
         <div class="post-meta-container">
           <div class="post-meta">
@@ -200,7 +209,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <!--toc-->
+        <!--toc-->
 <h2><span id="问题描述"><strong>问题描述</strong></span></h2><p>GE11的视频说明书开发过程中遇到一个问题，网络带宽远低于视频码率时使用IjkPlayer播放会频繁缓冲再播放，影响使用体验。</p>
 <h2><span id="问题复现"><strong>问题复现</strong></span></h2><p>先是想办法复现问题，为了可以控制网络速度，使用了Throttly - Network Tools这个软件来通过本地VPN限速的方式来模拟低带宽环境。视频源可以直接使用ijkPlayer自带demo里的sample。</p>
 <p>实际试下来会发生缓冲-播放频繁切换的现象，较为影响使用体验。</p>
@@ -235,7 +244,6 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="string">&quot;first-high-water-mark-ms&quot;</span>,           <span class="string">&quot;first chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.first_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;next-high-water-mark-ms&quot;</span>,            <span class="string">&quot;second chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.next_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br><span class="line">&#123; <span class="string">&quot;last-high-water-mark-ms&quot;</span>,            <span class="string">&quot;last chance to wakeup read_thread&quot;</span>,</span><br><span class="line"> OPTION_OFFSET(dcc.last_high_water_mark_in_ms),</span><br><span class="line"> OPTION_INT(DEFAULT_LAST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS,</span><br><span class="line">            DEFAULT_LAST_HIGH_WATER_MARK_IN_MS) &#125;,</span><br></pre></td></tr></table></figure>
 <p>DEFAULT_FIRST_HIGH_WATER_MARK_IN_MS &#x3D; 100ms<br>DEFAULT_LAST_HIGH_WATER_MARK_IN_MS &#x3D; 5000ms<br>我设置的是10000ms自然会报错，改为5000ms后不再报错且生效。<br>为什么会有上述限制还要进一步的寻找答案，目前猜和代码的逻辑有关系。</p>
 
-      
     </div>
 
     
@@ -243,456 +251,25 @@
     
 
     <footer class="post-footer">
-        <div class="post-eof"></div>
-      
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2023/03/31/Maven%E4%BE%9D%E8%B5%96%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E9%97%AE%E9%A2%98%E7%A0%94%E7%A9%B6/" rel="prev" title="Maven依赖自动更新问题研究">
+                  <i class="fa fa-chevron-left"></i> Maven依赖自动更新问题研究
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
     </footer>
   </article>
 </div>
 
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/Maven%E4%BE%9D%E8%B5%96%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E9%97%AE%E9%A2%98%E7%A0%94%E7%A9%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/Maven%E4%BE%9D%E8%B5%96%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0%E9%97%AE%E9%A2%98%E7%A0%94%E7%A9%B6/" class="post-title-link" itemprop="url">Maven依赖自动更新问题研究</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:42:10 / 修改时间：15:47:49" itemprop="dateCreated datePublished" datetime="2023-03-31T15:42:10+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <!-- toc -->
-
-<ul>
-<li><a href="#1-%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0">1. 问题描述</a></li>
-<li><a href="#2-%E4%B8%B4%E6%97%B6%E6%96%B9%E6%A1%88">2. 临时方案</a></li>
-<li><a href="#3-%E7%A0%94%E7%A9%B6%E9%87%8D%E5%90%AF">3. 研究重启</a></li>
-<li><a href="#4-%E6%9C%AC%E5%9C%B0%E6%A8%A1%E6%8B%9F%E5%92%8C%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3">4. 本地模拟和问题解决</a></li>
-<li><a href="#5-releases%E4%BB%93%E5%BA%93%E9%83%A8%E7%BD%B2%E7%AD%96%E7%95%A5">5. releases仓库部署策略</a></li>
-<li><a href="#6-%E7%BB%93%E8%AE%BA">6. 结论</a></li>
-</ul>
-<!-- tocstop -->
-
-<h2><span id="1-问题描述">1. 问题描述</span></h2><p>之前在GE11项目中，APP的公共依赖从公司self-hosted的Nexus maven仓库中拉取，而依赖更新发布则是使用Gradle的maven_publish插件配合自定义脚本推送到上述仓库。<br>实际开发中我们遇到了一个问题，依赖有更新时只会刷新maven仓库中的制品，此时APP重新编译并不会从maven拉取最新的依赖而是直接使用本地缓存。这在项目开发初期引发了很多问题，显著阻碍了开发的进度。</p>
-<h2><span id="2-临时方案">2. 临时方案</span></h2><p>在项目中后期，因为第一时间没有找到较好的解决方案且项目工期太紧，每个开发都被逼学会了编译前先删除gradle cache的hack solution，显然这样虽然解决了问题，但既耗时又不可靠。一定存在一个更合理更优雅的解决方案。</p>
-<h2><span id="3-研究重启">3. 研究重启</span></h2><p>现在GE11项目第一阶段已经接近尾声，我在继续开发核心库时需要升级版本，但觉得应该使用SNAPSHOT机制来发布。简单搜索到这个<a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/307112">理解Maven中的SNAPSHOT版本和正式版本-阿里云开发者社区</a><br>其中这段话勾起了我之前的痛苦回忆，想起来之前悬而未决的问题：<br><img src="https://s2.loli.net/2023/03/23/v4MxwBqYXCPjlWQ.png"></p>
-<h2><span id="4-本地模拟和问题解决">4. 本地模拟和问题解决</span></h2><p>为了能更好的还原我们的开发环境，在机器上自己搭建了一个nexus来做模拟验证，同时继续疯狂Google和看gradle以及maven的文档来寻找答案。<br>Maven和Gradle是两个不同的构建系统，上述图片里的xml片段是项目使用maven构建时配置用的，不能用于我们开发 Android APP 使用的 Gradle。<br>在尝试的过程中，我发现nexus部署后默认会创建几个repo，其中就有<code>maven-snapshots</code><br><img src="https://s2.loli.net/2023/03/23/Ewu4Wxb6YZrRqoA.png"><br>同时Gradle文档里对snapshot相关的介绍，表示正常如果需要发布snapshot版本，要发布到单独的snapshots仓库：<br><img src="https://s2.loli.net/2023/03/23/X34WYTwcpMNdUGk.png"><br>于是我修改已有的发布脚本，通过判断版本名是否以<code>SNAPSHOT</code>结尾来确定发布到maven的仓库类型<br><img src="https://s2.loli.net/2023/03/23/oqmfuCT5gwUpcEd.png"><br>实验之后发现snapshots仓库可以保存所有历史发布过的同版本依赖：<br><img src="https://s2.loli.net/2023/03/23/jcMxvHpuka9AiQg.png"><br>那么剩下的问题就是如何保证Gradle每次构建时自动拉取最新的依赖，有人在StackOverflow上提出了类似的<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/42058626/how-to-get-newest-snapshot-of-a-dependency-without-changing-version-in-gradle">问题</a><br>只需要在项目的build.gradle中添加下面的配置，每次编译gradle就会拉取snapshot版本或标记了<code>changing = true</code>的依赖的最新版本。</p>
-<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">configurations.all &#123;</span><br><span class="line">        resolutionStrategy.cacheChangingModulesFor <span class="number">0</span>, <span class="string">&#x27;seconds&#x27;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>原因是Gradle默认保存changing的依赖24小时，需要使用这个配置来改为0秒，下面的回答还提到了Gradle 6+以后snapshot依赖默认<code>changing=true</code>（<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/32652738/how-can-i-force-update-all-the-snapshot-gradle-dependencies-in-intellij">相关链接</a>）<br><img src="https://s2.loli.net/2023/03/23/LEGsKhIMCbZJ7gD.png"><br>至此问题解决，交叉验证通过。</p>
-<p>记得之前有尝试过在依赖后面添加 <code>changing = true</code>，无效的原因现在也找到了。然而，随后我在项目的<code>deps.gradle</code>里发现了这个片段，<code>cacheChangingModulesFor</code>被设置为了12小时……<br><img src="https://s2.loli.net/2023/03/23/SBEgzif6KqbyNsp.png"><br>需要补充的是，第二个配置<code>cacheDynamicVersionsFor</code>是对动态版本依赖的缓存策略配置，例如<code>xxx:1.0+</code>或者<code>xxx:latest</code>。具体可以看官方文档：<br><a target="_blank" rel="noopener" href="https://pateo.feishu.cn/docx/ZGqmdZQi5oKHvkxdfGAcyVufnqh#XOS6dScyAoE4s2xOkhrcDcvpnjf">文档1</a><br><a target="_blank" rel="noopener" href="https://pateo.feishu.cn/docx/ZGqmdZQi5oKHvkxdfGAcyVufnqh#UOYwd88Ioo6eqexW63Rci0ggnVe">文档2</a></p>
-<h2><span id="5-releases仓库部署策略">5. releases仓库部署策略</span></h2><p>值得一提的是，在用本地nexus测试的时候，我发现默认release仓库是不允许相同的版本反复修改的，如果不在后台将repo默认的部署策略配置改为Allow redeploy，我们publish是会失败的。<br><img src="https://s2.loli.net/2023/03/23/3fP4l8QFEYOyT1u.png"><br>报错如下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Execution failed for task &#x27;:library-core:publishReleasePublicationToMavenRepository&#x27;.</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Failed to publish publication <span class="string">&#x27;release&#x27;</span> to repository <span class="string">&#x27;maven&#x27;</span></span></span><br><span class="line"><span class="meta prompt_">   &gt; </span><span class="language-bash">Could not PUT <span class="string">&#x27;http://127.0.0.1:8081/repository/maven-releases/com/pateo/app/corelib/PateoPlayerAndSessionMgr/android/PlayerAndSessionMgr_Player/1.0.0/PlayerAndSessionMgr_Player-1.0.0.jar&#x27;</span>.</span> </span><br><span class="line">    Received status code 400 from server: Repository does not allow updating assets: maven-releases</span><br></pre></td></tr></table></figure>
-<h2><span id="6-结论">6. 结论</span></h2><ol>
-<li>在开发过程中应该使用 snapshots 库，稳定后发布到 releases 库，保证开发时敏捷，发布后稳定。</li>
-<li>使用Gradle构建时为了保证取用最新snapshot版本，需要修改<code>cacheChangingModulesFor</code>为较小数值</li>
-<li>releases库的部署策略不应该启用允许重复部署，确保版本稳定</li>
-<li>在向制品库发布正式版本时，最好同时打Git TAG，确保可追溯（可以整合进发布脚本来实现自动化）</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/openWrt-squashfs-%E5%9B%BA%E4%BB%B6%E6%89%A9%E5%AE%B9/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/openWrt-squashfs-%E5%9B%BA%E4%BB%B6%E6%89%A9%E5%AE%B9/" class="post-title-link" itemprop="url">openWrt squashfs 固件扩容</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:38:55 / 修改时间：15:39:29" itemprop="dateCreated datePublished" datetime="2023-03-31T15:38:55+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>可以参考eSir的YouTube视频：</p>
-<p><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=YwbwzuXKNlg">https://www.youtube.com/watch?v=YwbwzuXKNlg</a></p>
-<p>lsblk 查看分区 sda1是固件 sda2是默认系统分区 overlay挂载在looper上</p>
-<p>用cfdisk新建sda3分区，指定较大的空间（方向键上下选择分区，左右选择操作，选择free space，new，指定大小，write，quit）</p>
-<p>mkfs.ext4 格式化刚刚创建的分区</p>
-<p>将&#x2F;dev&#x2F;sda3挂载到&#x2F;mnt&#x2F;sda3目录</p>
-<p>拷贝&#x2F;overlay 目录下所有内容到&#x2F;mnt&#x2F;sda3下面，cp -r &#x2F;overlay&#x2F;* &#x2F;mnt&#x2F;sda3&#x2F;</p>
-<p>进入lede-luci webUI的系统-挂载点，新建挂载点，启用，选择&#x2F;mnt&#x2F;sda3 挂载到额外的&#x2F;overlay，保存并应用</p>
-<p>重启软路由</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/openWrt%E7%9A%84%E7%89%A9%E7%90%86%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/openWrt%E7%9A%84%E7%89%A9%E7%90%86%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">openWrt的物理安装方法</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:37:59 / 修改时间：15:38:32" itemprop="dateCreated datePublished" datetime="2023-03-31T15:37:59+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <ol>
-<li>下载固件（如<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1uRXg_krKHPrQneI3F2GNcSVRoCgkqESr">eSir的</a>），如果是压缩格式如tar，解压出img文件</li>
-<li>用Ventoy+U盘+WinPE做一个PE U盘 <br>a. 下载 <a target="_blank" rel="noopener" href="https://www.ventoy.net/cn/download.html">Ventoy</a>，并安装到U盘<br>b. 下载 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/download.html">WePE64 ISO</a><br>c. 下载 physdiskwrite.exe ，将WePE64的ISO以及physdiskwrite.exe都放到U盘根目录</li>
-<li>软路由断电，插入U盘，插入键盘，软路由接显示器</li>
-<li>启动软路由，键盘按F10&#x2F;F12&#x2F;F11&#x2F;Delete 键，进入启动选择，选WinPE启动</li>
-<li>进入WinPE系统后打开CMD，定位到U盘根目录，使用以下命令刷写镜像<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">physdiskwrite.exe -u xxx.img</span><br></pre></td></tr></table></figure>
-根据命令行提示，输入数字选择刷写目标</li>
-<li>刷写完成后重启软路由</li>
-<li>重启后记得在进系统前拔掉U盘，启动成功后电脑网线连eth0口，192.168.5.1进入WebUI</li>
-<li>重设密码以后，一定记得修改网口物理设置，然后HDCP，上网账号等等等……</li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/DDNSTO-openWrt-%E6%8F%92%E4%BB%B6%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/DDNSTO-openWrt-%E6%8F%92%E4%BB%B6%E5%AE%89%E8%A3%85%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">DDNSTO openWrt 插件安装方法</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:36:48 / 修改时间：15:37:20" itemprop="dateCreated datePublished" datetime="2023-03-31T15:36:48+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>OpenWrt固件开发者众多，部分固件不自带ddnsto，可通过以下任一脚本轻松安装：<br>via curl</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(curl -sSL http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
-<p>via wget</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh -c <span class="string">&quot;<span class="subst">$(wget --no-check-certificate -qO- http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh)</span>&quot;</span></span><br></pre></td></tr></table></figure>
-<p>others</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /tmp; wget --no-check-certificate http://fw.koolcenter.com/binary/ddnsto/openwrt/install_ddnsto.sh; sh ./install_ddnsto.sh</span><br></pre></td></tr></table></figure>
-<p>在OpenWrt TTYD终端中输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/fhQrU4evJ6HCPko.png"><br><img src="https://s2.loli.net/2023/03/23/aoYJEZePR6SIn7h.png"><br>或者putty、MobaXterm等软件登陆SSH，输入任一上述命令，会自动安装完成。<br><img src="https://s2.loli.net/2023/03/23/4knjo5PEf9IAgTt.png"><br><img src="https://s2.loli.net/2023/03/23/KqkTmlw2B79ezxb.png"><br><img src="https://s2.loli.net/2023/03/23/8RHaOkpYI4GD3bl.png"><br>然后找到DDNS.to内网穿透，启用并设置token。<br><img src="https://s2.loli.net/2023/03/23/QSo1q2VihPpeYrI.png"></p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://wesley0314.github.io/2023/03/31/Docker%E7%89%88%E4%B8%BA%E7%9F%A5%E7%AC%94%E8%AE%B0%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="Wesley Chen">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | Wesley's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/03/31/Docker%E7%89%88%E4%B8%BA%E7%9F%A5%E7%AC%94%E8%AE%B0%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">Docker版为知笔记遇到的问题</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2023-03-31 15:34:29 / 修改时间：15:35:17" itemprop="dateCreated datePublished" datetime="2023-03-31T15:34:29+08:00">2023-03-31</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E6%8A%98%E8%85%BE%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">折腾笔记</span></a>
-        </span>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>今天在自家的Nas上部署了docker版为知笔记，浏览器无法正常上传图片，Mac和Linux上的WizNoteX客户端无法正常同步笔记和新建笔记，iOS版的却是正常的。<br>后来研究了一下，发现是因为新版的WizNoteX不兼容，重新下载安装旧版的为知笔记后Mac和Linux端app又遇到了登陆失败的问题，后来研究发现是需要填入Http地址，切换到DDNSTO提供的http端口后终于登陆成功。<br>Linux端登陆成功后又发现无法切换输入法，也就是说无法输入中文，google之后发现是因为不支持fcitx，需要自行编译十分麻烦。<br>然后换了非官方的<a target="_blank" rel="noopener" href="https://github.com/altairwei/WizNotePlus">WiznotePlus</a>后解决了问题。正在犹豫要不要Mac上也改用这个。<br><img src="https://s2.loli.net/2023/03/23/rS7o3PygAUEOaFN.png" alt="Linux上的WizNotePlus"><br>Update：Mac版的WizNotePlus无法打开，提示无法验证开发者。换回了原版。</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
 
 
 
